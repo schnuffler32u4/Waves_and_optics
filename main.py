@@ -27,10 +27,10 @@ sndtest["Id"] = id1test
 traindata = pd.concat((fsttrain, sndtrain))
 testdata = pd.concat((fsttest, sndtest))
 
-traindata.rename(columns={"Time (s) Run #1": "T", "Light Intensity (lx) Run #1": "Light"}, inplace=True)
-testdata.rename(columns={"Time (s) Run #1": "T", "Light Intensity (lx) Run #1": "Light"}, inplace=True)
+traindata.rename(columns={"Time (s) Run #1": "Time", "Light Intensity (lx) Run #1": "Light"}, inplace=True)
+testdata.rename(columns={"Time (s) Run #1": "Time", "Light Intensity (lx) Run #1": "Light"}, inplace=True)
 
-traindata[["T", "Light", "Id"]].describe()
+traindata[["Time", "Light", "Id"]].describe()
 
 colors = ['#e09028', '#00FFFF']
 
@@ -49,14 +49,16 @@ testdata.drop(testdata[testdata.Light > 260].index, inplace=True)
 traindata.index = pd.RangeIndex(len(traindata.index))
 testdata.index = pd.RangeIndex(len(testdata.index))
 
+
 print(traindata)
-print(type(traindata.iloc[-1]['T']))
+#print(type(traindata.iloc[-1]['T']))
+
 # Normalize the features of the data to make it easier for the classifier
 
-traindata["T_normal"] = (traindata.T - traindata.T.mean()) / traindata.T.std()
+traindata["T_normal"] = (traindata.Time - traindata.Time.mean()) / traindata.Time.std()
 traindata["Light_normal"] = (traindata.Light - traindata.Light.mean()) / traindata.Light.std()
-testdata["T_normal"] = (testdata.T - testdata.T.mean()) / testdata.T.std()
-testdata["Light_normal"] = (testdata.Light - testdata.Light.mean) / testdata.Light.std()
+testdata["T_normal"] = (testdata.Time - testdata.Time.mean()) / testdata.Time.std()
+testdata["Light_normal"] = (testdata.Light - testdata.Light.mean()) / testdata.Light.std()
 
 
 def plot_decision_surface(clf, data, feature_list, step=0.02):
