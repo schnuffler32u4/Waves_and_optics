@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-
+from matplotlib.colors import ListedColormap
 from sklearn import neighbors
 import warnings
 
@@ -49,9 +49,8 @@ testdata.drop(testdata[testdata.Light > 260].index, inplace=True)
 traindata.index = pd.RangeIndex(len(traindata.index))
 testdata.index = pd.RangeIndex(len(testdata.index))
 
-
 print(traindata)
-#print(type(traindata.iloc[-1]['T']))
+# print(type(traindata.iloc[-1]['T']))
 
 # Normalize the features of the data to make it easier for the classifier
 
@@ -112,30 +111,33 @@ def kNN_classify(traindata, testdata,
     # make a copy of the dataframe. The original table will not be altered.
     #
     # data_tmp = data.copy()
+    traindata_tmp = traindata.copy()
+    testdata_tmp = testdata.copy()
     #
     # Add a column specifying whether event is used for training or for testing
     #
-    # data_tmp['is_train'] = np.random.uniform(0, 1, len(data_tmp)) <= (1 - prop_test)
+    traindata_tmp['is_train'] = np.ones(len(traindata_tmp))
+    testdata_tmp['is_train'] = np.zeros((len(testdata_tmp)))
+    data_tmp = pd.concat((testdata_tmp, traindata_tmp))
     #
     # Extract two seperate datasets for training (train) and testing (test)
     #
-    # train, test = data_tmp[data_tmp['is_train'] == True], data_tmp[data_tmp['is_train'] == False]
-    train = traindata
-    test = testdata
+    train, test = data_tmp[data_tmp['is_train'] == True], data_tmp[data_tmp['is_train'] == False]
+
     # we create an instance of Neighbours Classifier and fit the data.
     clf = neighbors.KNeighborsClassifier(k)
     clf.fit(train[feature_list], train['Id'])
 
     # evaluate the training points
     trainpred = clf.predict(train[feature_list])
-    train['prediction'] = [x for x in trainpred]
-
+    # train['prediction'] = [x for x in trainpred]
+    train['prediction'] = trainpred
     # Predict on the testing points
     testpred = clf.predict(test[feature_list])
-    test['prediction'] = [x for x in testpred]
-
-    data_update = train.append(test)
-
+    # test['prediction'] = [x for x in testpred]
+    test['prediction'] = testpred
+    # data_update = train.append(test)
+    data_update = pd.concat((train, test))
     # plotting the decision surface for the first two given features
 
     if (plot_ds) & (len(feature_list) == 2):
@@ -154,6 +156,15 @@ def getFOM(data):
     return nrtest_S / np.sqrt(nrtest_S + nrtest_B)
 
 
-datanew = kNN_classify(traindata, testdata)
+things = np.zeros(100)
+
+for k in range(1, len(things) + 1):
+    datanew = kNN_classify(traindata, testdata, k=k)
+    things[k - 1] = float(getFOM(datanew))
+k = int(np.where(things == np.amax(things))[0] + 1)
+datanew = kNN_classify(traindata, testdata, plot_ds=True, k=k)
 fomtest = getFOM(datanew)
+print("The FOM is:")
 print(fomtest)
+print("And the correct identification rate is: " + str(len(datanew[(datanew.is_train == False) & (datanew.prediction == datanew.Id) & (datanew.Id == 0)])) + " out of " +str(len(testdata[(testdata.Id == 0)])))
+
